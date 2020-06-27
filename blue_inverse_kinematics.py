@@ -16,10 +16,7 @@ def main():
     pybullet.setRealTimeSimulation(1) #this makes the simulation real time
 
     robot = BlueRobot(args.robot_path)
-
-    robot.go_to_rest_pose()
-    for _ in tqdm(range(10), desc='startup'):
-        time.sleep(0.01)
+    robot.startup()
 
     right_control = PositionControl(*robot.get_right_arm_position(), prefix='right')
     rigth_clamp_control = ClampControl(prefix='right')
