@@ -11,6 +11,7 @@ def main():
     pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
     plane = pybullet.loadURDF("plane.urdf")
     robot = BlueRobot(args.robot_path)
+    robot.startup()
     pybullet.setGravity(0, 0, -9.81)
     pybullet.setRealTimeSimulation(1) #this makes the simulation real time
 

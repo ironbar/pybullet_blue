@@ -1,6 +1,8 @@
-import sys
+"""
+Utilities to control Blue robot
+"""
 import time
-import argparse
+from tqdm import tqdm
 import pybullet
 
 class BlueRobot():
@@ -93,6 +95,11 @@ class BlueRobot():
         print('lower_limit       ', sep.join([str(round(x, 2)) for x in self.lower_limits]))
         print('upper_limit       ', sep.join([str(round(x, 2)) for x in self.upper_limits]))
         print()
+
+    def startup(self):
+        self.go_to_rest_pose()
+        for _ in tqdm(range(10), desc='startup'):
+            time.sleep(0.01)
 
 
 def getJointRanges(bodyId, includeFixed=False):
