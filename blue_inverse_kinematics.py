@@ -9,6 +9,8 @@ from blue_controller import BlueRobotController
 
 # Constants
 BUCLE_STEP = 0.016
+POSITION_STEP = 0.1
+ROTATION_STEP = 0.1
 GRAVITY = -9.81
 
 # Controller
@@ -28,13 +30,36 @@ def is_key_pressed(keys, key):
     return False
 
 def check_keyboard():
+    global left_position
+    global left_orientation
+    global right_position
+    global right_orientation
+
     keys = pybullet.getKeyboardEvents()
 
+    # Quit
     if is_key_pressed(keys, 'q'):
         return True
 
-    if is_key_pressed(keys, 'j'):
-        print("do stuff")
+    # Left position
+    if is_key_pressed(keys, 'w'):
+        left_position[0] += POSITION_STEP
+
+    if is_key_pressed(keys, 'e'):
+        left_position[1] += POSITION_STEP
+
+    if is_key_pressed(keys, 'r'):
+        left_position[2] += POSITION_STEP
+
+    # Left rotation
+    if is_key_pressed(keys, 's'):
+        left_orientation[0] += ROTATION_STEP
+
+    if is_key_pressed(keys, 'd'):
+        left_orientation[0] += ROTATION_STEP
+
+    if is_key_pressed(keys, 'f'):
+        left_orientation[0] += ROTATION_STEP
 
     return False
 
@@ -98,14 +123,18 @@ def run():
         right_position = robot_controller.get_right_position()
         right_orientation = robot_controller.get_right_orientation()
 
+        #print(left_position)
         # Process user inputs
         check_mouse()
         check_gamepad()
         abort = check_keyboard()
 
+        #print(left_position)
+
         if abort:
             break
 
+        # Controller BUG, changing position no set the new position on the render
         # Set info position
         robot_controller.set_left_position(left_position)
         robot_controller.set_left_orientation(left_orientation)
