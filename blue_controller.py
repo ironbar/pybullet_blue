@@ -38,10 +38,6 @@ class BlueRobotController():
 
     def __init__(self, path):
         self._robot = None
-        self._right_position = None
-        self._right_orientation = None
-        self._left_position = None
-        self._left_orientation = None
         self._right_control = None
         self._left_control = None
         self._right_clamp_control = None
@@ -58,29 +54,45 @@ class BlueRobotController():
         self._left_clamp_control = self.ClampControl(prefix='left')
         self._robot.debug_arm_idx()
 
-    def read_robot_attributes(self):
-        self._right_position, self._right_orientation = self._right_control.get_position()
-        self._left_position, self._left_orientation = self._left_control.get_position()
+    def get_left_position(self):
+        left_position, _ = self._left_control.get_position()
+        return left_position
 
-    def write_robot_attributes(self):
-        self._robot.move_right_arm(self._right_position, self._right_orientation)
-        self._robot.move_left_arm(self._left_position, self._left_orientation)
+    def get_left_orientation(self):
+        _, left_orientation = self._left_control.get_position()
+        return left_orientation
 
-        # Debug only
-        self.debug_position(self._right_position, self._robot.get_right_arm_position()[0])
-        self.debug_position(self._left_position, self._robot.get_left_arm_position()[0])
+    def get_right_position(self):
+        right_position, _ = self._right_control.get_position()
+        return right_position
+
+    def get_right_orientation(self):
+        _, right_orientation = self._right_control.get_position()
+        return right_orientation
+
+    def set_left_position(self, position):
+        _, orientation = self._left_control.get_position()
+        self._robot.move_left_arm(position, orientation)
+
+    def set_left_orientation(self, orientation):
+        position, _ = self._left_control.get_position()
+        self._robot.move_left_arm(position, orientation)
+
+    def set_right_position(self, position):
+        _, orientation = self._right_control.get_position()
+        self._robot.move_right_arm(position, orientation)
+
+    def set_right_orientation(self, orientation):
+        position, _ = self._right_control.get_position()
+        self._robot.move_right_arm(position, orientation)     
 
     def print_robot_info(self):
         print("right arm:")
-        print(self._right_position)
-        print(self._right_orientation)
+        print(self.get_right_position())
+        print(self.get_right_orientation())
         print("left arm:")
-        print(self._left_position)
-        print(self._left_orientation)
-
-    def debug_position(self, goal, source):
-        pybullet.addUserDebugLine(
-            goal, source, lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)
+        print(self.get_left_position())
+        print(self.get_left_orientation())
 
     def check_clamp_control(self):
         if self._right_clamp_control.close_clamp():
@@ -91,3 +103,11 @@ class BlueRobotController():
             self._robot.close_left_clamp()
         else:
             self._robot.open_left_clamp()
+
+    def debug_left_position(self, goal):
+        pybullet.addUserDebugLine(
+            goal, self._robot.get_left_arm_position()[0], lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)
+
+    def debug_right_position(self, goal):
+        pybullet.addUserDebugLine(
+            goal, self._robot.get_right_arm_position()[0], lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)

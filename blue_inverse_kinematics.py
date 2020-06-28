@@ -12,7 +12,12 @@ BUCLE_STEP = 0.016
 GRAVITY = -9.81
 
 # Controller
+steps = 0
 robot_controller = None
+left_position = None
+left_orientation = None
+right_position = None
+right_orientation = None
 
 # Events
 ########
@@ -78,11 +83,22 @@ def run():
     """
     Run forever the robot (until q is pressed)
     """
-    while True:
-        robot_controller.read_robot_attributes()
-        robot_controller.write_robot_attributes()
+    global steps
+    global left_position
+    global left_orientation
+    global right_position
+    global right_orientation
 
-        robot_controller.check_clamp_control()
+    steps = 0
+    while True:
+        # Get info from robot positions
+        left_position = robot_controller.get_left_position()
+        left_orientation = robot_controller.get_left_orientation()
+
+        right_position = robot_controller.get_right_position()
+        right_orientation = robot_controller.get_right_orientation()
+
+        # Process user inputs
         check_mouse()
         check_gamepad()
         abort = check_keyboard()
@@ -90,7 +106,24 @@ def run():
         if abort:
             break
 
+        # Set info position
+        robot_controller.set_left_position(left_position)
+        robot_controller.set_left_orientation(left_orientation)
+        robot_controller.set_right_position(right_position)
+        robot_controller.set_right_orientation(right_orientation)
+
+        robot_controller.check_clamp_control()
+
+        # Render debug info
+        robot_controller.debug_right_position(right_position)
+        robot_controller.debug_left_position(left_position)
+
+        steps += 1
+        if steps % 100 == 0:
+            robot_controller.print_robot_info()
+
         time.sleep(BUCLE_STEP)
+
     print("Q key was pressed. Quit.")
 
 def initialize_pybullet():
