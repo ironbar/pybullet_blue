@@ -5,33 +5,32 @@ from tqdm import tqdm
 import pybullet
 import pybullet_data
 
-from blue import BlueRobot
+from blue_controller import BlueRobotController
 
 # Constants
 BUCLE_STEP = 0.016
+GRAVITY = -9.81
 
-# Robot
-robot = None
-right_position = None
-right_orientation = None
-left_position = None
-left_orientation = None
-right_control = None
-left_control = None
-right_clamp_control = None
-left_clamp_control = None
+# Controller
+robot_controller = None
 
-# Keyboard
-qKey = ord('q')
-jKey = ord('j')
+# Events
+########
+def is_key_pressed(keys, key):
+    if ord(key) in keys and keys[ord(key)] & pybullet.KEY_WAS_TRIGGERED:
+        print("keyboard event: " + key + " pushed.")
+        return True
+    return False
 
 def check_keyboard():
     keys = pybullet.getKeyboardEvents()
-    if qKey in keys and keys[qKey]&pybullet.KEY_WAS_TRIGGERED:
-        print("keyboard event: q pushed")
+
+    if is_key_pressed(keys, 'q'):
         return True
-    if jKey in keys and keys[jKey]&pybullet.KEY_WAS_TRIGGERED:
-        print("keyboard event: j pushed")
+
+    if is_key_pressed(keys, 'j'):
+        print("do stuff")
+
     return False
 
 def check_mouse():
@@ -73,123 +72,46 @@ def check_mouse():
 def check_gamepad():
     return True
 
-def read_robot_attributes():
-    global right_position, right_orientation
-    global left_position, left_orientation
-    right_position, right_orientation = right_control.get_position()
-    left_position, left_orientation = left_control.get_position()
-
-def write_robot_attributes():
-    robot.move_right_arm(right_position, right_orientation)
-    robot.move_left_arm(left_position, left_orientation)
-
-    # Debug only
-    debug_position(right_position, robot.get_right_arm_position()[0])
-    debug_position(left_position, robot.get_left_arm_position()[0])
-
-def print_robot_info():
-    print("right arm:")
-    print(right_position)
-    print(right_orientation)
-    print("left arm:")
-    print(left_position)
-    print(left_orientation)
-
-def debug_position(goal, source):
-    pybullet.addUserDebugLine(
-        goal, source, lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)
-
-class PositionControl():
-
-    def __init__(self, initial_position, initial_orientation, prefix):
-        position_idx = []
-        x, y, z = initial_position[0], initial_position[1], initial_position[2]
-        offset = 1
-        position_idx.append(pybullet.addUserDebugParameter('%s x' % prefix, x - offset, x + offset, x))
-        position_idx.append(pybullet.addUserDebugParameter('%s y' % prefix, y - offset, y + offset, y))
-        position_idx.append(pybullet.addUserDebugParameter('%s z' % prefix, 0.2, 2, z))
-
-        orientation_idx = []
-        orientation_idx.append(pybullet.addUserDebugParameter('%s euler 1' % prefix, -3.14, 3.14,
-                                                              initial_orientation[0]))
-        orientation_idx.append(pybullet.addUserDebugParameter('%s euler 2' % prefix, -3.14, 3.14,
-                                                              initial_orientation[1]))
-        orientation_idx.append(pybullet.addUserDebugParameter('%s euler 3' % prefix, -3.14, 3.14,
-                                                              initial_orientation[2]))
-
-        self.position_idx = position_idx
-        self.orientation_idx = orientation_idx
-
-    def get_position(self):
-        orientation = [pybullet.readUserDebugParameter(idx) for idx in self.orientation_idx]
-        position = [pybullet.readUserDebugParameter(idx) for idx in self.position_idx]
-        return position, orientation
-
-
-class ClampControl():
-
-    def __init__(self, prefix):
-        self.id = pybullet.addUserDebugParameter('%s clamp' % prefix, 0, -1, 0)
-        self.value = 0
-
-    def close_clamp(self):
-        return pybullet.readUserDebugParameter(self.id) % 2
-
-def check_clamp_control():
-    if right_clamp_control.close_clamp():
-        robot.close_right_clamp()
-    else:
-        robot.open_right_clamp()
-    if left_clamp_control.close_clamp():
-        robot.close_left_clamp()
-    else:
-        robot.open_left_clamp()
-
+# Logic
+#######
 def run():
     """
     Run forever the robot (until q is pressed)
     """
     while True:
-        read_robot_attributes()
-        write_robot_attributes()
+        robot_controller.read_robot_attributes()
+        robot_controller.write_robot_attributes()
 
-        check_clamp_control()
+        robot_controller.check_clamp_control()
         check_mouse()
         check_gamepad()
         abort = check_keyboard()
+
         if abort:
             break
 
         time.sleep(BUCLE_STEP)
+    print("Q key was pressed. Quit.")
 
-def parse_args():
+def initialize_pybullet():
+    pybullet.connect(pybullet.GUI)
+    pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
+    pybullet.setGravity(0, 0, GRAVITY)
+    pybullet.setRealTimeSimulation(True)
+
+    plane = pybullet.loadURDF("plane.urdf")
+
+# Main
+######
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Allows to move each joint of the robot independently.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-r', '--robot_path', help='Path to the urdf model of the robot',
                         default='robots/blue_full_v2.urdf')
-    return parser.parse_args(sys.argv[1:])
+    args = parser.parse_args(sys.argv[1:])
 
-if __name__ == '__main__':
-    args = parse_args()
-
-    # Initialize Engine
-    pybullet.connect(pybullet.GUI)
-    pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
-    plane = pybullet.loadURDF("plane.urdf")
-    pybullet.setGravity(0, 0, -9.81)
-    pybullet.setRealTimeSimulation(1) #this makes the simulation real time
-
-    # Initialize robot
-    robot = BlueRobot(args.robot_path)
-    robot.startup()
-
-    right_control = PositionControl(*robot.get_right_arm_position(), prefix='right')
-    right_clamp_control = ClampControl(prefix='right')
-
-    left_control = PositionControl(*robot.get_left_arm_position(), prefix='left')
-    left_clamp_control = ClampControl(prefix='left')
-    robot.debug_arm_idx()
-
+    initialize_pybullet()
+    robot_controller = BlueRobotController(args.robot_path)
     run()
 
