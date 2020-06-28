@@ -7,6 +7,9 @@ import pybullet_data
 
 from blue import BlueRobot
 
+# Keyboard
+qKey = ord('q')
+
 def main():
     args = parse_args()
     pybullet.connect(pybullet.GUI)
@@ -28,6 +31,8 @@ def main():
     left_clamp_control = ClampControl(prefix='left')
     robot.debug_arm_idx()
 
+    
+
     while 1:
         position, orientation = right_control.get_position()
         robot.move_right_arm(position, orientation)
@@ -45,6 +50,60 @@ def main():
             robot.close_left_clamp()
         else:
             robot.open_left_clamp()
+
+        check_mouse()
+        check_gamepad()
+        abort = check_keyboard()
+        if abort:
+            break
+
+        time.sleep(0.01)
+
+def check_keyboard():
+    keys = pybullet.getKeyboardEvents()
+    if qKey in keys and keys[qKey]&pybullet.KEY_WAS_TRIGGERED:
+        print("keyboard event: q pushed")
+        return True
+    return False
+
+def check_mouse():
+    mouseEvents = pybullet.getMouseEvents()
+    for e in mouseEvents:
+        eventType = e[0]
+        mousePosX = e[1]
+        mousePosY = e[2]
+        buttonIndex = e[3]
+        buttonState = e[4]
+
+        button_type = "Unknown"
+        button_id = "Unknown"
+        button_action = "Unknown"
+
+        if eventType == 1:
+            button_type = "Movement"
+        if eventType == 2:
+            button_type = "Click"
+
+        if buttonIndex == 0:
+            button_id = "left"
+        if buttonIndex == 1:
+            button_id = "middle"
+        if buttonIndex == 2:
+            button_id = "right"
+
+        if buttonState == 3:
+            button_action = "down"
+        if buttonState == 4:
+            button_action = "release"
+
+        if (eventType == 2):    # Only log click    
+            print("Mouse " + button_id + " " + button_type + " " + button_action + " at: (" + str(mousePosX) + "," \
+                + str(mousePosY) + ")" + " ")
+            return True
+    return False
+
+def check_gamepad():
+    return True
 
 def debug_position(goal, source):
     pybullet.addUserDebugLine(
