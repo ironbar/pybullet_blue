@@ -7,60 +7,31 @@ import pybullet_data
 
 from blue import BlueRobot
 
+# Constants
+BUCLE_STEP = 0.016
+
+# Robot
+robot = None
+right_position = None
+right_orientation = None
+left_position = None
+left_orientation = None
+right_control = None
+left_control = None
+right_clamp_control = None
+left_clamp_control = None
+
 # Keyboard
 qKey = ord('q')
-
-def main():
-    args = parse_args()
-    pybullet.connect(pybullet.GUI)
-    pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
-    plane = pybullet.loadURDF("plane.urdf")
-    pybullet.setGravity(0, 0, -9.81)
-    pybullet.setRealTimeSimulation(1) #this makes the simulation real time
-
-    robot = BlueRobot(args.robot_path)
-    robot.startup()
-
-    right_control = PositionControl(*robot.get_right_arm_position(), prefix='right')
-    rigth_clamp_control = ClampControl(prefix='right')
-
-    left_control = PositionControl(*robot.get_left_arm_position(), prefix='left')
-    left_clamp_control = ClampControl(prefix='left')
-    robot.debug_arm_idx()
-
-    
-
-    while 1:
-        position, orientation = right_control.get_position()
-        robot.move_right_arm(position, orientation)
-        debug_position(position, robot.get_right_arm_position()[0])
-
-        position, orientation = left_control.get_position()
-        robot.move_left_arm(position, orientation)
-        debug_position(position, robot.get_left_arm_position()[0])
-
-        if rigth_clamp_control.close_clamp():
-            robot.close_right_clamp()
-        else:
-            robot.open_right_clamp()
-        if left_clamp_control.close_clamp():
-            robot.close_left_clamp()
-        else:
-            robot.open_left_clamp()
-
-        check_mouse()
-        check_gamepad()
-        abort = check_keyboard()
-        if abort:
-            break
-
-        time.sleep(0.01)
+jKey = ord('j')
 
 def check_keyboard():
     keys = pybullet.getKeyboardEvents()
     if qKey in keys and keys[qKey]&pybullet.KEY_WAS_TRIGGERED:
         print("keyboard event: q pushed")
         return True
+    if jKey in keys and keys[jKey]&pybullet.KEY_WAS_TRIGGERED:
+        print("keyboard event: j pushed")
     return False
 
 def check_mouse():
@@ -102,6 +73,28 @@ def check_mouse():
 def check_gamepad():
     return True
 
+def read_robot_attributes():
+    global right_position, right_orientation
+    global left_position, left_orientation
+    right_position, right_orientation = right_control.get_position()
+    left_position, left_orientation = left_control.get_position()
+
+def write_robot_attributes():
+    robot.move_right_arm(right_position, right_orientation)
+    robot.move_left_arm(left_position, left_orientation)
+
+    # Debug only
+    debug_position(right_position, robot.get_right_arm_position()[0])
+    debug_position(left_position, robot.get_left_arm_position()[0])
+
+def print_robot_info():
+    print("right arm:")
+    print(right_position)
+    print(right_orientation)
+    print("left arm:")
+    print(left_position)
+    print(left_orientation)
+
 def debug_position(goal, source):
     pybullet.addUserDebugLine(
         goal, source, lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)
@@ -142,6 +135,33 @@ class ClampControl():
     def close_clamp(self):
         return pybullet.readUserDebugParameter(self.id) % 2
 
+def check_clamp_control():
+    if right_clamp_control.close_clamp():
+        robot.close_right_clamp()
+    else:
+        robot.open_right_clamp()
+    if left_clamp_control.close_clamp():
+        robot.close_left_clamp()
+    else:
+        robot.open_left_clamp()
+
+def run():
+    """
+    Run forever the robot (until q is pressed)
+    """
+    while True:
+        read_robot_attributes()
+        write_robot_attributes()
+
+        check_clamp_control()
+        check_mouse()
+        check_gamepad()
+        abort = check_keyboard()
+        if abort:
+            break
+
+        time.sleep(BUCLE_STEP)
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Allows to move each joint of the robot independently.',
@@ -151,4 +171,25 @@ def parse_args():
     return parser.parse_args(sys.argv[1:])
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+
+    # Initialize Engine
+    pybullet.connect(pybullet.GUI)
+    pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
+    plane = pybullet.loadURDF("plane.urdf")
+    pybullet.setGravity(0, 0, -9.81)
+    pybullet.setRealTimeSimulation(1) #this makes the simulation real time
+
+    # Initialize robot
+    robot = BlueRobot(args.robot_path)
+    robot.startup()
+
+    right_control = PositionControl(*robot.get_right_arm_position(), prefix='right')
+    right_clamp_control = ClampControl(prefix='right')
+
+    left_control = PositionControl(*robot.get_left_arm_position(), prefix='left')
+    left_clamp_control = ClampControl(prefix='left')
+    robot.debug_arm_idx()
+
+    run()
+
