@@ -8,7 +8,7 @@ import pybullet_data
 from blue_controller import BlueRobotController
 
 # Constants
-BUCLE_STEP = 0.016
+BUCLE_STEP = 0.001
 POSITION_STEP = 0.1
 ROTATION_STEP = 0.1
 GRAVITY = -9.81
