@@ -1,6 +1,7 @@
 """
 """
 import pybullet
+import pybullet_data
 
 class PoseControl():
     """
@@ -44,3 +45,9 @@ class ClampControl():
 def debug_position(goal, source, lifetime=0.5):
     pybullet.addUserDebugLine(
         goal, source, lineColorRGB=[1, 0, 0], lifeTime=lifetime, lineWidth=2)
+
+def set_minimal_environment():
+    pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
+    pybullet.loadURDF("plane.urdf")
+    pybullet.setGravity(0, 0, -9.81)
+    pybullet.setRealTimeSimulation(1)
