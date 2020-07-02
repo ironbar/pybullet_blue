@@ -41,7 +41,7 @@ class Robot():
             time.sleep(0.01)
 
 
-class BlueRobot():
+class BlueRobot(Robot):
     RIGHT_ARM_LINK_IDX = 7
     LEFT_ARM_LINK_IDX = 24
 
@@ -59,9 +59,6 @@ class BlueRobot():
 
     def get_left_arm_position(self):
         return self._get_link_state(self.LEFT_ARM_LINK_IDX)
-
-    def _get_link_state(self, link_idx):
-        return get_link_state(self.id, link_idx)
 
     def move_right_arm(self, position, orientation):
         target_positions = self._inverse_kinematics(
@@ -103,29 +100,10 @@ class BlueRobot():
             self.id, self.moving_joints_idx[20:24], pybullet.POSITION_CONTROL,
             targetPositions=[0]*4)
 
-    def _inverse_kinematics(self, link_idx, position, orientation):
-        if len(orientation) == 3:
-            orientation = pybullet.getQuaternionFromEuler(orientation)
-        target_positions = pybullet.calculateInverseKinematics(
-            self.id,
-            endEffectorLinkIndex=link_idx,
-            targetPosition=position,
-            targetOrientation=orientation,
-            **self.kinematics_kwargs)
-        return target_positions
-
     def debug_arm_idx(self):
         # press 'w' to see this links highlighted
         pybullet.setDebugObjectColor(self.id, self.RIGHT_ARM_LINK_IDX, [1, 0, 0])
         pybullet.setDebugObjectColor(self.id, self.LEFT_ARM_LINK_IDX, [1, 0, 0])
-
-    def get_motor_positions(self):
-        return [pybullet.getJointState(self.id, idx)[0] for idx in self.moving_joints_idx]
-
-    def go_to_rest_pose(self):
-        pybullet.setJointMotorControlArray(
-            self.id, self.moving_joints_idx, pybullet.POSITION_CONTROL,
-            targetPositions=self.rest_poses)
 
     def _print_motor_positions_for_debug(self, target_positions):
         sep = '  \t'
@@ -137,11 +115,6 @@ class BlueRobot():
         print('lower_limit       ', sep.join([str(round(x, 2)) for x in self.lower_limits]))
         print('upper_limit       ', sep.join([str(round(x, 2)) for x in self.upper_limits]))
         print()
-
-    def startup(self):
-        for _ in tqdm(range(10), desc='startup'):
-            self.go_to_rest_pose()
-            time.sleep(0.01)
 
 
 class BlueArm(Robot):
