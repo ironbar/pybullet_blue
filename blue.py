@@ -166,3 +166,78 @@ def get_link_state(robot, link_idx):
     ret = pybullet.getLinkState(robot, link_idx)
     position, orientation = ret[0], pybullet.getEulerFromQuaternion(ret[1])
     return position, orientation
+
+
+class Robot():
+    def __init__(self):
+        self.id = None
+        self.kinematics_kwargs = {}
+        self.moving_joints_idx = []
+        self.rest_poses = None
+
+    def _get_link_state(self, link_idx):
+        return get_link_state(self.id, link_idx)
+
+    def _inverse_kinematics(self, link_idx, position, orientation):
+        if len(orientation) == 3:
+            orientation = pybullet.getQuaternionFromEuler(orientation)
+        target_positions = pybullet.calculateInverseKinematics(
+            self.id,
+            endEffectorLinkIndex=link_idx,
+            targetPosition=position,
+            targetOrientation=orientation,
+            **self.kinematics_kwargs)
+        return target_positions
+
+    def get_motor_positions(self):
+        return [pybullet.getJointState(self.id, idx)[0] for idx in self.moving_joints_idx]
+
+    def go_to_rest_pose(self):
+        pybullet.setJointMotorControlArray(
+            self.id, self.moving_joints_idx, pybullet.POSITION_CONTROL,
+            targetPositions=self.rest_poses)
+
+    def startup(self):
+        for _ in tqdm(range(10), desc='startup'):
+            self.go_to_rest_pose()
+            time.sleep(0.01)
+
+class BlueArm(Robot):
+    LINK_IDX = 7
+
+    def __init__(self, robot_path):
+        flags = pybullet.URDF_USE_SELF_COLLISION | pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
+        self.id = pybullet.loadURDF(robot_path, [0, 0, 0], useFixedBase=1, flags=flags)
+        self.kinematics_kwargs, self.moving_joints_idx = getJointRanges(self.id, False)
+        self.lower_limits = self.kinematics_kwargs['lowerLimits']
+        self.upper_limits = self.kinematics_kwargs['upperLimits']
+        self.rest_poses = self.kinematics_kwargs['restPoses']
+        self.n_moving_joints = len(self.moving_joints_idx)
+
+    def get_pose(self):
+        return self._get_link_state(self.LINK_IDX)
+
+    def move(self, position, orientation):
+        target_positions = self._inverse_kinematics(
+            self.LINK_IDX, position, orientation)
+        pybullet.setJointMotorControlArray(
+            self.id, self.moving_joints_idx[:7], pybullet.POSITION_CONTROL,
+            targetPositions=target_positions[:7],
+            # targetVelocities=[0.1]*7,
+            positionGains=[1]*7,
+            # velocityGains=[1e-3]*7,
+            )
+
+    def close_clamp(self):
+        pybullet.setJointMotorControlArray(
+            self.id, self.moving_joints_idx[8:12], pybullet.POSITION_CONTROL,
+            targetPositions=[1, 0, 1, 0])
+
+    def open_clamp(self):
+        pybullet.setJointMotorControlArray(
+            self.id, self.moving_joints_idx[8:12], pybullet.POSITION_CONTROL,
+            targetPositions=[0]*4)
+
+    def debug_arm_idx(self):
+        # press 'w' to see this links highlighted
+        pybullet.setDebugObjectColor(self.id, self.LINK_IDX, [1, 0, 0])
