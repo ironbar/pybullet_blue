@@ -32,14 +32,20 @@ class BlueRobot():
             self.RIGHT_ARM_LINK_IDX, position, orientation)
         pybullet.setJointMotorControlArray(
             self.id, self.moving_joints_idx[:7], pybullet.POSITION_CONTROL,
-            targetPositions=target_positions[:7])
+            targetPositions=target_positions[:7],
+            # targetVelocities=[0.1]*7,
+            positionGains=[1]*7,
+            # velocityGains=[1e-3]*7,
+            )
 
     def move_left_arm(self, position, orientation):
         target_positions = self._inverse_kinematics(
             self.LEFT_ARM_LINK_IDX, position, orientation)
         pybullet.setJointMotorControlArray(
             self.id, self.moving_joints_idx[12:19], pybullet.POSITION_CONTROL,
-            targetPositions=target_positions[12:19])
+            targetPositions=target_positions[12:19],
+            positionGains=[1]*7
+            )
 
     def close_right_clamp(self):
         pybullet.setJointMotorControlArray(
@@ -97,8 +103,8 @@ class BlueRobot():
         print()
 
     def startup(self):
-        self.go_to_rest_pose()
         for _ in tqdm(range(10), desc='startup'):
+            self.go_to_rest_pose()
             time.sleep(0.01)
 
 
