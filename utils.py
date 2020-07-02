@@ -42,7 +42,7 @@ class ClampControl():
     def close_clamp(self):
         return pybullet.readUserDebugParameter(self.id) % 2
 
-def debug_position(goal, source, lifetime=0.5):
+def debug_position(goal, source, lifetime=0.2):
     pybullet.addUserDebugLine(
         goal, source, lineColorRGB=[1, 0, 0], lifeTime=lifetime, lineWidth=2)
 
