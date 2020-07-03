@@ -40,6 +40,9 @@ class Robot():
             self.go_to_rest_pose()
             time.sleep(0.01)
 
+    def get_mass(self):
+        link_mass = [pybullet.getDynamicsInfo(self.id, idx)[0] for idx in range(pybullet.getNumJoints(self.id))]
+        print('Total mass is : %.1f (%s)' % (sum(link_mass), link_mass))
 
 class BlueRobot(Robot):
     RIGHT_ARM_LINK_IDX = 7

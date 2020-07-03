@@ -25,6 +25,7 @@ def main():
     pose_control = PoseControl(*robot.get_pose(), prefix='right')
     clamp_control = ClampControl(prefix='right')
     robot.debug_arm_idx()
+    robot.get_mass()
 
     while 1:
         position, orientation = pose_control.get_pose()
