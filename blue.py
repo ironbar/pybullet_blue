@@ -86,7 +86,7 @@ class BlueRobot(Robot):
     def close_right_clamp(self):
         pybullet.setJointMotorControlArray(
             self.id, self.moving_joints_idx[8:12], pybullet.POSITION_CONTROL,
-            targetPositions=[1, 0, 1, 0])
+            targetPositions=[1, -0.7]*2)
 
     def open_right_clamp(self):
         pybullet.setJointMotorControlArray(
@@ -96,7 +96,7 @@ class BlueRobot(Robot):
     def close_left_clamp(self):
         pybullet.setJointMotorControlArray(
             self.id, self.moving_joints_idx[20:24], pybullet.POSITION_CONTROL,
-            targetPositions=[1, 0, 1, 0])
+            targetPositions=[1, -0.7]*2)
 
     def open_left_clamp(self):
         pybullet.setJointMotorControlArray(
@@ -149,7 +149,7 @@ class BlueArm(Robot):
     def close_clamp(self):
         pybullet.setJointMotorControlArray(
             self.id, self.moving_joints_idx[8:12], pybullet.POSITION_CONTROL,
-            targetPositions=[1, 0, 1, 0])
+            targetPositions=[1, -0.7]*2)
 
     def open_clamp(self):
         pybullet.setJointMotorControlArray(
