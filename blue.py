@@ -121,10 +121,10 @@ class BlueRobot(Robot):
 
 
 class BlueArm(Robot):
-    LINK_IDX = 7
+    LINK_IDX = 6
 
     def __init__(self, robot_path):
-        flags = pybullet.URDF_USE_SELF_COLLISION | pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS
+        flags = pybullet.URDF_USE_SELF_COLLISION | pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS | pybullet.URDF_MERGE_FIXED_LINKS | pybullet.URDF_USE_INERTIA_FROM_FILE
         self.id = pybullet.loadURDF(robot_path, [0, 0, 0], useFixedBase=1, flags=flags)
         self.kinematics_kwargs, self.moving_joints_idx = getJointRanges(self.id, False)
         self.lower_limits = self.kinematics_kwargs['lowerLimits']
@@ -191,17 +191,17 @@ def getJointRanges(bodyId, includeFixed=False):
             jr = ul - ll
 
             # For simplicity, assume resting state == initial state
-            # rp = pybullet.getJointState(bodyId, i)[0]
+            rp = pybullet.getJointState(bodyId, i)[0]
             # Instead of that I will define a better rest position
             # This has clearly improved the Inverse kinematics calculation
             # However on v2 version of blue I have increased the range of the motors and probably
             # it is not necessary anymore. Or I may find a better rest position.
-            if ul == 0:
-                rp = ul - jr/4
-            elif ul == -1:
-                rp = 0
-            else:
-                rp = ll + jr/2
+            # if ul == 0:
+            #     rp = ul - jr/4
+            # elif ul == -1:
+            #     rp = 0
+            # else:
+            #     rp = ll + jr/2
 
             lowerLimits.append(ll)
             upperLimits.append(ul)
