@@ -1,5 +1,6 @@
 """
 """
+import numpy as np
 import pybullet
 import pybullet_data
 
@@ -50,3 +51,12 @@ def set_minimal_environment():
     pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
     pybullet.loadURDF("plane.urdf")
     pybullet.setGravity(0, 0, -9.81)
+
+def add_table_with_objects_to_simulation():
+    _add_element("table/table.urdf", (0.5, 0, 0.3), (0, 0, 0.707107, 0.707107), 1)
+    for x in np.linspace(0.2, 0.8, 4):
+        _add_element("cube_small.urdf", (x, 0, 1), (0, 0, 0, 1), 0)
+        _add_element("jenga/jenga.urdf", (x, -0.1, 1), (0.000000, 0.707107, 0.000000, 0.707107), 0)
+
+def _add_element(path, position, orientation, fixed_base):
+    pybullet.loadURDF(path, basePosition=position, baseOrientation=orientation, useFixedBase=fixed_base)

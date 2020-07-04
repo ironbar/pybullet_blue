@@ -6,7 +6,9 @@ import pybullet
 import pybullet_data
 
 from blue import BlueRobot
-from utils import PoseControl, ClampControl, debug_position, set_minimal_environment
+from utils import (
+    PoseControl, ClampControl, debug_position, set_minimal_environment,
+    add_table_with_objects_to_simulation)
 
 DEFAULT_ROBOT_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
@@ -16,6 +18,8 @@ def main():
     args = parse_args()
     pybullet.connect(pybullet.GUI)
     set_minimal_environment()
+    if args.add_toys:
+        add_table_with_objects_to_simulation()
 
     robot = BlueRobot(args.robot_path)
     robot.startup()
@@ -53,6 +57,8 @@ def parse_args():
     parser.add_argument('-r', '--robot_path', help='Path to the urdf model of the robot',
                         default=DEFAULT_ROBOT_PATH)
     parser.add_argument('-d', '--debug_position', help='Draw lines between current position and goal position',
+                        action='store_true')
+    parser.add_argument('-t', '--add_toys', help='Add a table with toys for playing',
                         action='store_true')
     return parser.parse_args(sys.argv[1:])
 
