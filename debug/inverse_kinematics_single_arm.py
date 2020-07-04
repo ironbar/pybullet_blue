@@ -4,6 +4,7 @@ Control a single blue robot arm with inverse kinematics
 import os
 import sys
 import argparse
+from tqdm import tqdm
 import pybullet
 import pybullet_data
 
@@ -40,16 +41,18 @@ def main():
     robot.get_mass()
 
     while 1:
-        position, orientation = pose_control.get_pose()
-        robot.move(position, orientation)
-        debug_position(position, robot.get_pose()[0])
+        for _ in tqdm(range(1000), desc='Running simulation'):
+            position, orientation = pose_control.get_pose()
+            robot.move(position, orientation)
+            if args.debug_position:
+                debug_position(position, robot.get_pose()[0])
 
-        if not args.use_kuka:
-            if clamp_control.close_clamp():
-                robot.close_clamp()
-            else:
-                robot.open_clamp()
-        pybullet.stepSimulation()
+            if not args.use_kuka:
+                if clamp_control.close_clamp():
+                    robot.close_clamp()
+                else:
+                    robot.open_clamp()
+            pybullet.stepSimulation()
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -58,6 +61,8 @@ def parse_args():
     parser.add_argument('-r', '--robot_path', help='Path to the urdf model of the robot',
                         default=None)
     parser.add_argument('-k', '--use_kuka', help='Use Kuka instead of Blue',
+                        action='store_true')
+    parser.add_argument('-d', '--debug_position', help='Draw lines between current position and goal position',
                         action='store_true')
     return parser.parse_args(sys.argv[1:])
 
