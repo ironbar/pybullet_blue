@@ -9,12 +9,13 @@ import pybullet_data
 import numpy as np
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-DEFAULT_ROBOT_PATH = os.path.join(SCRIPT_DIR, '../robots/blue_left_v2.urdf')
+DEFAULT_BLUE_ROBOT_PATH = os.path.join(SCRIPT_DIR, '../robots/blue_left_v2.urdf')
+DEFAULT_KUKA_ROBOT_PATH = os.path.join(SCRIPT_DIR, '../robots/lbr_iiwa_14_r820.urdf')
 
 sys.path.append(os.path.join(SCRIPT_DIR, '..'))
 from blue import BlueArm
 from utils import PoseControl, ClampControl, debug_position, set_minimal_environment
-
+from kuka import Kuka
 
 
 def main():
@@ -27,17 +28,23 @@ def main():
     pybullet.loadURDF("plane.urdf")
     pybullet.setGravity(0, 0, -9.81)
 
-    robot = BlueArm(args.robot_path)
+    if args.use_kuka:
+        robot_path = args.robot_path or DEFAULT_KUKA_ROBOT_PATH
+        robot = Kuka(robot_path)
+    else:
+        robot_path = args.robot_path or DEFAULT_BLUE_ROBOT_PATH
+        robot = BlueArm(robot_path)
     robot.startup(is_real_time=False)
 
     speed = measure_speed(robot, distance_threshold=1e-1)
     print('The speed when the threshold is 1e-1 is: %i' % speed)
-    speed = measure_speed(robot, distance_threshold=1e-2)
-    print('The speed when the threshold is 1e-2 is: %i' % speed)
+    # Commented because kuka is not able to achieve that accuracy
+    # speed = measure_speed(robot, distance_threshold=1e-2)
+    # print('The speed when the threshold is 1e-2 is: %i' % speed)
 
-def measure_speed(robot, distance_threshold, n_cycles=5, startup_cycles=20):
+def measure_speed(robot, distance_threshold, n_cycles=10, startup_cycles=20):
     _, orientation = robot.get_pose()
-    source, goal = [0.3, 0.3, 0.5], [0.3, -0.3, 0.5]
+    source, goal = [0.3, 0.3, 0.6], [0.3, -0.3, 0.6]
     # do a first cycles for startup
     for _ in range(startup_cycles):
         go_to_pose(robot, source, orientation, distance_threshold=distance_threshold)
@@ -70,8 +77,10 @@ def parse_args():
         description='Control a single blue robot arm with inverse kinematics',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-r', '--robot_path', help='Path to the urdf model of the robot',
-                        default=DEFAULT_ROBOT_PATH)
+                        default=None)
     parser.add_argument('-v', '--use_gui', help='Use GUI',
+                        action='store_true')
+    parser.add_argument('-k', '--use_kuka', help='Use Kuka instead of Blue',
                         action='store_true')
     return parser.parse_args(sys.argv[1:])
 
