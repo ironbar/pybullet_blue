@@ -44,6 +44,7 @@ def main():
                 robot.close_left_clamp()
             else:
                 robot.open_left_clamp()
+            pybullet.stepSimulation()
 
 def parse_args():
     parser = argparse.ArgumentParser(

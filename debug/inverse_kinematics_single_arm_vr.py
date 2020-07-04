@@ -23,9 +23,7 @@ def main():
     args = parse_args()
     pybullet.connect(pybullet.SHARED_MEMORY)
     pybullet.resetSimulation()
-    pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
-    pybullet.loadURDF("plane.urdf")
-    pybullet.setGravity(0, 0, -9.81)
+    set_minimal_environment()
 
     if args.use_kuka:
         robot_path = args.robot_path or DEFAULT_KUKA_ROBOT_PATH

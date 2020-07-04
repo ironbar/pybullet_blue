@@ -50,4 +50,3 @@ def set_minimal_environment():
     pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
     pybullet.loadURDF("plane.urdf")
     pybullet.setGravity(0, 0, -9.81)
-    pybullet.setRealTimeSimulation(1)
