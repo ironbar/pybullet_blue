@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from tqdm import tqdm
 import pybullet
 import pybullet_data
 
@@ -26,22 +27,23 @@ def main():
     robot.debug_arm_idx()
 
     while 1:
-        position, orientation = right_control.get_pose()
-        robot.move_right_arm(position, orientation)
-        debug_position(position, robot.get_right_arm_pose()[0])
+        for _ in tqdm(range(1000), desc='Running simulation'):
+            position, orientation = right_control.get_pose()
+            robot.move_right_arm(position, orientation)
+            if args.debug_position: debug_position(position, robot.get_right_arm_pose()[0])
 
-        position, orientation = left_control.get_pose()
-        robot.move_left_arm(position, orientation)
-        debug_position(position, robot.get_left_arm_pose()[0])
+            position, orientation = left_control.get_pose()
+            robot.move_left_arm(position, orientation)
+            if args.debug_position: debug_position(position, robot.get_left_arm_pose()[0])
 
-        if rigth_clamp_control.close_clamp():
-            robot.close_right_clamp()
-        else:
-            robot.open_right_clamp()
-        if left_clamp_control.close_clamp():
-            robot.close_left_clamp()
-        else:
-            robot.open_left_clamp()
+            if rigth_clamp_control.close_clamp():
+                robot.close_right_clamp()
+            else:
+                robot.open_right_clamp()
+            if left_clamp_control.close_clamp():
+                robot.close_left_clamp()
+            else:
+                robot.open_left_clamp()
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -49,6 +51,8 @@ def parse_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-r', '--robot_path', help='Path to the urdf model of the robot',
                         default=DEFAULT_ROBOT_PATH)
+    parser.add_argument('-d', '--debug_position', help='Draw lines between current position and goal position',
+                        action='store_true')
     return parser.parse_args(sys.argv[1:])
 
 if __name__ == '__main__':
