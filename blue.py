@@ -60,10 +60,10 @@ class BlueRobot(Robot):
         self.rest_poses = self.kinematics_kwargs['restPoses']
         self.n_moving_joints = len(self.moving_joints_idx)
 
-    def get_right_arm_position(self):
+    def get_right_arm_pose(self):
         return self._get_link_state(self.RIGHT_ARM_LINK_IDX)
 
-    def get_left_arm_position(self):
+    def get_left_arm_pose(self):
         return self._get_link_state(self.LEFT_ARM_LINK_IDX)
 
     def move_right_arm(self, position, orientation):

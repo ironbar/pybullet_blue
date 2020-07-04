@@ -15,7 +15,7 @@ class BlueRobotController():
         self._robot.startup()
 
         # We may change this to put inside robot TODO
-        self._right_control = PoseControl(*self._robot.get_right_arm_position(), prefix='right')
+        self._right_control = PoseControl(*self._robot.get_right_arm_pose(), prefix='right')
         self._right_clamp_control = ClampControl(prefix='right')
 
         self._left_control = PoseControl(*self._robot.get_left_arm_position(), prefix='left')
@@ -78,4 +78,4 @@ class BlueRobotController():
 
     def debug_right_position(self, goal):
         pybullet.addUserDebugLine(
-            goal, self._robot.get_right_arm_position()[0], lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)
+            goal, self._robot.get_right_arm_pose()[0], lineColorRGB=[1, 0, 0], lifeTime=1, lineWidth=2)
