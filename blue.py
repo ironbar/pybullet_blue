@@ -35,10 +35,13 @@ class Robot():
             self.id, self.moving_joints_idx, pybullet.POSITION_CONTROL,
             targetPositions=self.rest_poses)
 
-    def startup(self):
+    def startup(self, is_real_time=True):
         for _ in tqdm(range(10), desc='startup'):
             self.go_to_rest_pose()
-            time.sleep(0.01)
+            if is_real_time:
+                time.sleep(0.01)
+            else:
+                pybullet.stepSimulation()
 
     def get_mass(self):
         link_mass = [pybullet.getDynamicsInfo(self.id, idx)[0] for idx in range(pybullet.getNumJoints(self.id))]
