@@ -21,7 +21,7 @@ def main():
 
     right_control = PoseControl(*robot.get_right_arm_pose(), prefix='right')
     rigth_clamp_control = ClampControl(prefix='right')
-    left_control = PoseControl(*robot.get_left_arm_position(), prefix='left')
+    left_control = PoseControl(*robot.get_left_arm_pose(), prefix='left')
     left_clamp_control = ClampControl(prefix='left')
     robot.debug_arm_idx()
 
@@ -32,7 +32,7 @@ def main():
 
         position, orientation = left_control.get_pose()
         robot.move_left_arm(position, orientation)
-        debug_position(position, robot.get_left_arm_position()[0])
+        debug_position(position, robot.get_left_arm_pose()[0])
 
         if rigth_clamp_control.close_clamp():
             robot.close_right_clamp()
