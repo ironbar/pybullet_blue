@@ -1,6 +1,7 @@
 """
 Utilities to control Blue robot
 """
+import os
 import time
 from tqdm import tqdm
 import pybullet
@@ -47,6 +48,7 @@ class Robot():
     def get_mass(self):
         link_mass = [pybullet.getDynamicsInfo(self.id, idx)[0] for idx in range(pybullet.getNumJoints(self.id))]
         print('Total mass is : %.1f (%s)' % (sum(link_mass), link_mass))
+
 
 class BlueRobot(Robot):
     RIGHT_ARM_LINK_IDX = 7
@@ -146,9 +148,10 @@ class BlueRobot(Robot):
 class BlueArm(Robot):
     LINK_IDX = 6
 
-    def __init__(self, robot_path):
+    def __init__(self, robot_path, base_position=None):
         flags = pybullet.URDF_USE_SELF_COLLISION | pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS | pybullet.URDF_MERGE_FIXED_LINKS | pybullet.URDF_USE_INERTIA_FROM_FILE
-        self.id = pybullet.loadURDF(robot_path, [0, 0, 0], useFixedBase=1, flags=flags)
+        base_position = base_position or [0, 0, 0]
+        self.id = pybullet.loadURDF(robot_path, base_position, useFixedBase=1, flags=flags)
         self.kinematics_kwargs, self.moving_joints_idx = getJointRanges(self.id, False)
         self.lower_limits = self.kinematics_kwargs['lowerLimits']
         self.upper_limits = self.kinematics_kwargs['upperLimits']
@@ -182,6 +185,47 @@ class BlueArm(Robot):
     def debug_arm_idx(self):
         # press 'w' to see this links highlighted
         pybullet.setDebugObjectColor(self.id, self.LINK_IDX, [1, 0, 0])
+
+
+class BlueRobotV2():
+    def __init__(self):
+        robots_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), 'robots')
+        self.left_arm = BlueArm(os.path.join(robots_dir, 'blue_left_v2.urdf'), [0, 0.3, 1])
+        self.right_arm = BlueArm(os.path.join(robots_dir, 'blue_right_v2.urdf'), [0, -0.3, 1])
+        pybullet.loadURDF(os.path.join(robots_dir, 'blue_base_v2.urdf'),
+                          [0, 0, 1], useFixedBase=1)
+
+    def control(self, left_pose, right_pose, left_clamp, right_clamp, do_debug_position=False):
+        """
+        Simpler interface for moving the arms and controlling the clamps
+        """
+        self.left_arm.move(*left_pose)
+        if do_debug_position: debug_position(left_pose[0], self.left_arm.get_pose()[0])
+        self.right_arm.move(*right_pose)
+        if do_debug_position: debug_position(right_pose[0], self.right_arm.get_pose()[0])
+        if right_clamp:
+            self.right_arm.close_clamp()
+        else:
+            self.right_arm.open_clamp()
+        if left_clamp:
+            self.left_arm.close_clamp()
+        else:
+            self.left_arm.open_clamp()
+
+    def startup(self):
+        self.left_arm.startup()
+        self.right_arm.startup()
+
+    def debug_arm_idx(self):
+        self.right_arm.debug_arm_idx()
+        self.left_arm.debug_arm_idx()
+
+    def get_left_arm_pose(self):
+        return self.left_arm.get_pose()
+
+    def get_right_arm_pose(self):
+        return self.right_arm.get_pose()
 
 
 def getJointRanges(bodyId, includeFixed=False):
