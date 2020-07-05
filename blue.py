@@ -5,6 +5,7 @@ import time
 from tqdm import tqdm
 import pybullet
 
+from utils import debug_position
 
 class Robot():
     def __init__(self):
@@ -121,6 +122,25 @@ class BlueRobot(Robot):
         print('lower_limit       ', sep.join([str(round(x, 2)) for x in self.lower_limits]))
         print('upper_limit       ', sep.join([str(round(x, 2)) for x in self.upper_limits]))
         print()
+
+    def control(self, left_pose, right_pose, left_clamp, right_clamp, do_debug_position=False):
+        """
+        Simpler interface for moving the arms and controlling the clamps
+        """
+        self.move_right_arm(*right_pose)
+        if do_debug_position: debug_position(right_pose[0], self.get_right_arm_pose()[0])
+
+        self.move_left_arm(*left_pose)
+        if do_debug_position: debug_position(left_pose[0], self.get_left_arm_pose()[0])
+
+        if right_clamp:
+            self.close_right_clamp()
+        else:
+            self.open_right_clamp()
+        if left_clamp:
+            self.close_left_clamp()
+        else:
+            self.open_left_clamp()
 
 
 class BlueArm(Robot):
