@@ -23,32 +23,42 @@ def main():
 
     robot = BlueRobot(args.robot_path)
     robot.startup()
-
-    right_control = PoseControl(*robot.get_right_arm_pose(), prefix='right')
-    rigth_clamp_control = ClampControl(prefix='right')
-    left_control = PoseControl(*robot.get_left_arm_pose(), prefix='left')
-    left_clamp_control = ClampControl(prefix='left')
     robot.debug_arm_idx()
+    controller = BlueSliderController(robot)
 
     while 1:
         for _ in tqdm(range(1000), desc='Running simulation'):
-            position, orientation = right_control.get_pose()
-            robot.move_right_arm(position, orientation)
-            if args.debug_position: debug_position(position, robot.get_right_arm_pose()[0])
+            left_pose, right_pose, left_clamp, right_clamp = controller.get_poses_and_clamps()
 
-            position, orientation = left_control.get_pose()
-            robot.move_left_arm(position, orientation)
-            if args.debug_position: debug_position(position, robot.get_left_arm_pose()[0])
+            robot.move_right_arm(*right_pose)
+            if args.debug_position: debug_position(right_pose[0], robot.get_right_arm_pose()[0])
 
-            if rigth_clamp_control.close_clamp():
+            robot.move_left_arm(*left_pose)
+            if args.debug_position: debug_position(left_pose[0], robot.get_left_arm_pose()[0])
+
+            if right_clamp:
                 robot.close_right_clamp()
             else:
                 robot.open_right_clamp()
-            if left_clamp_control.close_clamp():
+            if left_clamp:
                 robot.close_left_clamp()
             else:
                 robot.open_left_clamp()
             pybullet.stepSimulation()
+
+class BlueSliderController():
+    """
+    Slider Controller for blue robot
+    """
+    def __init__(self, robot):
+        self.right_control = PoseControl(*robot.get_right_arm_pose(), prefix='right')
+        self.rigth_clamp_control = ClampControl(prefix='right')
+        self.left_control = PoseControl(*robot.get_left_arm_pose(), prefix='left')
+        self.left_clamp_control = ClampControl(prefix='left')
+
+    def get_poses_and_clamps(self):
+        return self.left_control.get_pose(), self.right_control.get_pose(), \
+               self.left_clamp_control.close_clamp(), self.rigth_clamp_control.close_clamp()
 
 def parse_args():
     parser = argparse.ArgumentParser(
