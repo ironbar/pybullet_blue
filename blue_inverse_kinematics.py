@@ -94,6 +94,16 @@ class BlueVRController():
 
 
 def parse_args():
+    description = """
+    Control blue robot with inverse kinematics and VR
+
+    If Using VR:
+    Previously to launch the python script the App_PhysicsServer_SharedMemory_VR should be running.
+    That app is inside bullet and it needs to be compiled. Then it is launched using steam. In
+    my case is the line below.
+
+    /home/guillermo/.steam/ubuntu12_32/steam-runtime/run.sh /media/guillermo/Data/MEGA/mimo/bullet3/build_cmake/examples/SharedMemory/App_PhysicsServer_SharedMemory_VR
+    """
     parser = argparse.ArgumentParser(
         description='Control blue robot with inverse kinematics',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
